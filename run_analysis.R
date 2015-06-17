@@ -65,8 +65,11 @@
   #Appropriately labels the data set with descriptive variable names. 
   colnames(subjects_combined)<-'Subject ID'
   dataCombined<-cbind(subjects_combined,y_combined,X_combined)
-
-#
+  names(dataCombined)[1]<-'Subject_ID'
+  names(dataCombined)[2]<-'Activity'
+  
+  
+#From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
   uniqueSubjects=unique(subjects_combined[,1])
   numberSubjects=length(uniqueSubjects)
   numberActivities<-dim(activity_labels)[1]
@@ -77,10 +80,13 @@
     for (a in 1:numberActivities){
       results[row,1]=uniqueSubjects[s]
       results[row,2]=tolower(activity_labels[a,2])
-      tmp<-dataCombined[(grepl(tolower(activity_labels[a,2]),dataCombined[,2]) & grepl(s,dataCombined[,2])),]
-      results[row,3:numberDataColumns]<-colMeans(tmp[,3:numberDataColumns])
+      locations<-dataCombined[,1]==uniqueSubjects[s]&grepl(paste('\\b',tolower(activity_labels[a,2]),'\\b',sep=''),dataCombined[,2])
+      tmp<-dataCombined[locations,3:numberDataColumns]
+      results[row,3:numberDataColumns]<-colMeans(tmp)
       row=row+1
     }
   }
+  sortedOrder<-sort.int(results[,1],index.return=TRUE)  
+  results<-results[sortedOrder$ix,]
   write.table(results,'meansOfMeasuresBySubjAndActivity.txt',row.name=FALSE)
   
