@@ -1,16 +1,13 @@
-  # if (!file.exists("C:\\Users\\daniel\\Documents\\R\\Getting and Cleaning Data")){
-  #   dir.create('C:\\Users\\daniel\\Documents\\R\\Getting and Cleaning Data')
-  # }
-  # 
-  # workingdirectory<-"C:\\Users\\daniel\\Documents\\R\\Getting and Cleaning Data"
-  
+library(reshape2)
+library(data.table)
+
+workingdirectory<-"C:\\Users\\daniel\\Documents\\R\\Getting and Cleaning Data"
+
 #Load the data 
-  if (!file.exists("C:\\Users\\bermads1\\Documents\\Daniel\\Coursera\\Getting and Cleaning Data")){
-    dir.create('C:\\Users\\bermads1\\Documents\\Daniel\\Coursera\\Getting and Cleaning Data')
+  if (!file.exists(workingdirectory)){
+    dir.create(workingdirectory)
   }
   
-  #the upper level of the working directory
-  workingdirectory<-"C:\\Users\\bermads1\\Documents\\Daniel\\Coursera\\Getting and Cleaning Data"
   
   #Sets the working directory and checks that the zip file is downloaded. If the file is not downloaded then it
   #downloads it
@@ -67,26 +64,11 @@
   dataCombined<-cbind(subjects_combined,y_combined,X_combined)
   names(dataCombined)[1]<-'Subject_ID'
   names(dataCombined)[2]<-'Activity'
+  names(dataCombined)<-gsub('-','_',names(dataCombined))
   
-  
-#From the data set in step 4, creates a second, independent tidy data set with the average of each variable for each activity and each subject.
-  uniqueSubjects=unique(subjects_combined[,1])
-  numberSubjects=length(uniqueSubjects)
-  numberActivities<-dim(activity_labels)[1]
-  numberDataColumns<-dim(dataCombined)[2]
-  results=dataCombined[1:(numberSubjects*numberActivities),]
-  row=1
-  for (s in 1:numberSubjects){
-    for (a in 1:numberActivities){
-      results[row,1]=uniqueSubjects[s]
-      results[row,2]=tolower(activity_labels[a,2])
-      locations<-dataCombined[,1]==uniqueSubjects[s]&grepl(paste('\\b',tolower(activity_labels[a,2]),'\\b',sep=''),dataCombined[,2])
-      tmp<-dataCombined[locations,3:numberDataColumns]
-      results[row,3:numberDataColumns]<-colMeans(tmp)
-      row=row+1
-    }
-  }
-  sortedOrder<-sort.int(results[,1],index.return=TRUE)  
-  results<-results[sortedOrder$ix,]
+  dataCombined<-data.table(dataCombined)
+  results<-dataCombined[,lapply(.SD,mean),by=list(Subject_ID,Activity)]
+  results<-results[order(Subject_ID)]
+
   write.table(results,'meansOfMeasuresBySubjAndActivity.txt',row.name=FALSE)
   
